@@ -20,17 +20,29 @@ const App = (props) => {
   const addNote = (event) => {
     event.preventDefault();
     const newNoteObj = {
-      id: notes.length + 1,
       content: newNote,
       important: Math.random() < 0.5,
       date: new Date().toISOString(),
     };
-    setNotes(notes.concat(newNoteObj));
-    setNewNote("");
+    axios.post("http://localhost:3001/notes", newNoteObj).then((response) => {
+      console.log(response);
+      setNotes(notes.concat(response.data));
+      setNewNote("");
+    });
   };
 
   const handleNoteChange = (event) => {
     setNewNote(event.target.value);
+  };
+
+  const toggleImportanceOf = (id) => {
+    const url = `http://localhost:3001/notes/${id}`;
+    const note = notes.find((n) => n.id === id);
+    const changedNote = { ...note, important: !note.important };
+
+    axios.put(url, changedNote).then((response) => {
+      setNotes(notes.map((note) => (note.id === id ? response.data : note)));
+    });
   };
 
   const notesToShow = showAll ? notes : notes.filter((note) => note.important);
@@ -45,7 +57,11 @@ const App = (props) => {
       </div>
       <ul>
         {notesToShow.map((note) => (
-          <Note key={note.id} note={note} />
+          <Note
+            key={note.id}
+            note={note}
+            toggleImportance={() => toggleImportanceOf(note.id)}
+          />
         ))}
       </ul>
       <form onSubmit={addNote}>
